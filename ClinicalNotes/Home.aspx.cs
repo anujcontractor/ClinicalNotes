@@ -23,7 +23,6 @@ namespace ClinicalNotes
         public string Address { get; set; }
         public List<ClinicalNotes> ClinicalNotes { get; set; }
 
-        // Constructor to initialize the ClinicalNotes list
         public PatientInfo()
         {
             ClinicalNotes = new List<ClinicalNotes>();
@@ -44,7 +43,6 @@ namespace ClinicalNotes
 
     public class TwoLineFooter : PdfPageEventHelper
     {
-        // Define the footer content
         private string line1;
         private string line2;
 
@@ -58,23 +56,21 @@ namespace ClinicalNotes
         {
             PdfContentByte cb = writer.DirectContent;
 
-            // Set font and font size for the footer
             BaseFont bf = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
             cb.SetFontAndSize(bf, 10);
 
-            // First line of the footer
             cb.BeginText();
             cb.ShowTextAligned(PdfContentByte.ALIGN_CENTER, line1,
                 (document.Right + document.Left) / 2, document.Bottom - 5, 0);
             cb.EndText();
 
-            // Second line of the footer
             cb.BeginText();
             cb.ShowTextAligned(PdfContentByte.ALIGN_CENTER, line2,
                 (document.Right + document.Left) / 2, document.Bottom - 20, 0);
             cb.EndText();
         }
     }
+
 
     public partial class Home : System.Web.UI.Page
     {
@@ -147,10 +143,8 @@ namespace ClinicalNotes
         }
         protected void btnDownloadPDF_ServerClick(object sender, EventArgs e)
         {
-            // Define the file name
             string fileName = "ClinicalNote.pdf";
 
-            // Set the HTTP headers to force download
             Response.ContentType = "application/pdf";
             Response.AddHeader("content-disposition", "attachment;filename=" + fileName);
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
@@ -158,7 +152,6 @@ namespace ClinicalNotes
             string footerLine1 = "15-19 Cavendish Place, 2nd Floor, London, England, W1G 0DD";
             string footerLine2 = "Email: enquiry@londonphysiotherapy.com";
 
-            // Create a PDF document
             Document pdfDoc = new Document(PageSize.A4, 25, 25, 30, 30);
             PdfWriter writer = PdfWriter.GetInstance(pdfDoc, Response.OutputStream);
 
@@ -170,14 +163,12 @@ namespace ClinicalNotes
 
             pdfDoc.Open();
 
-            // Add your logo
             string logoPath = Server.MapPath("~/Assets/logo.jpg");
             iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
             logo.ScaleToFit(100f, 50f);
             logo.SetAbsolutePosition(25, pdfDoc.PageSize.Height - 80);
             pdfDoc.Add(logo);
 
-            // Add the Hospital Address
             Font addressFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK);
             Paragraph address = new Paragraph("15-19 Cavandish Place 2nd Floor\nLondon, England W1G 0DD\nenquiry@londonphysiotherapy.com", addressFont);
             address.Alignment = Element.ALIGN_RIGHT;
@@ -185,7 +176,6 @@ namespace ClinicalNotes
 
             pdfDoc.Add(new Paragraph("\n\n\n"));
 
-            // Add the Title with style
             Font titleFont = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
             Paragraph title = new Paragraph("Clinical Notes", titleFont);
             title.Alignment = Element.ALIGN_CENTER;
@@ -194,21 +184,19 @@ namespace ClinicalNotes
             pdfDoc.Add(new Paragraph("\n\n"));
 
             // Fetch data from the database
-            string connect = "";  // Your connection string here
-            int patientCaseRefNo = 18090;  // Example: Pass this from your form or URL
+            string connect = "";  
+            int patientCaseRefNo = 18090;  
 
             using (SqlConnection connection = new SqlConnection(connect))
             {
                 connection.Open();
 
-                // Query to get patient data
                 string patientQuery = "SELECT CaseRefNo, Name, RequestedSession, DOB, LoginDate, DOI, Address FROM Patients WHERE CaseRefNo = @CaseRefNo";
                 SqlCommand patientCommand = new SqlCommand(patientQuery, connection);
                 patientCommand.Parameters.AddWithValue("@CaseRefNo", patientCaseRefNo);
 
                 SqlDataReader reader = patientCommand.ExecuteReader();
 
-                // If patient data is found
                 if (reader.Read())
                 {
                     PdfPTable table = new PdfPTable(4);
@@ -216,30 +204,23 @@ namespace ClinicalNotes
                     float[] columnWidths = { 1.5f, 3f, 1.5f, 3f };
                     table.SetWidths(columnWidths);
 
-                    // Set header fonts
-                    //Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.BLACK);
-                    //Font dataFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL, BaseColor.BLACK);
                     BaseColor headerColor = new BaseColor(192, 192, 192);  // Light gray
 
-                    // Add "Case Ref No:" and "Requested Session:" from database
                     AddCellToTable(table, "Case Ref No:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, reader["CaseRefNo"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
                     AddCellToTable(table, "Requested Session:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, reader["RequestedSession"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
 
-                    // Add "Name:" and "DOB:"
                     AddCellToTable(table, "Name:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, reader["Name"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
                     AddCellToTable(table, "DOB:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, Convert.ToDateTime(reader["DOB"]).ToString("dd/MM/yyyy"), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
 
-                    // Add "Login Date:" and "DOI:"
                     AddCellToTable(table, "Login Date:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, Convert.ToDateTime(reader["LoginDate"]).ToString("dd/MM/yyyy"), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
                     AddCellToTable(table, "DOI:", headerFont, headerColor, Element.ALIGN_LEFT);
                     AddCellToTable(table, Convert.ToDateTime(reader["DOI"]).ToString("dd/MM/yyyy"), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
 
-                    // Add "Address:"
                     AddCellToTable(table, "Address:", headerFont, headerColor, Element.ALIGN_LEFT);
                     PdfPCell addressCell = new PdfPCell(new Phrase(reader["Address"].ToString(), dataFont));
                     addressCell.Colspan = 3;
@@ -247,47 +228,38 @@ namespace ClinicalNotes
                     addressCell.Border = PdfPCell.BOX;
                     table.AddCell(addressCell);
 
-                    // Add the table to the document
                     pdfDoc.Add(table);
                 }
 
                 reader.Close();
 
-                // Query to get clinical notes data
                 string notesQuery = "SELECT NoteDate, Subjective, Objective, Assessment, Plan FROM ClinicalNotes WHERE CaseRefNo = @CaseRefNo";
                 SqlCommand notesCommand = new SqlCommand(notesQuery, connection);
                 notesCommand.Parameters.AddWithValue("@CaseRefNo", patientCaseRefNo);
 
                 SqlDataReader notesReader = notesCommand.ExecuteReader();
 
-                // Add Clinical Notes Section
                 Font sectionFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD, BaseColor.BLACK);
                 pdfDoc.Add(new Paragraph("\nClinical Notes:", sectionFont));
 
                 while (notesReader.Read())
                 {
-                    // Create a table for clinical notes sections
                     PdfPTable notesTable = new PdfPTable(2);
                     notesTable.WidthPercentage = 100;
                     notesTable.SetWidths(new float[] { 0.5f, 2f });
 
-                    // Add Date
                     Paragraph date = new Paragraph(Convert.ToDateTime(notesReader["NoteDate"]).ToString("dd/MM/yyyy"), dataFont);
                     pdfDoc.Add(date);
 
-                    // Subjective Section
                     AddCellToTable(notesTable, "Subjective:", headerFont, BaseColor.LIGHT_GRAY, Element.ALIGN_LEFT);
                     AddCellToTable(notesTable, notesReader["Subjective"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-
-                    // Objective Section
+ 
                     AddCellToTable(notesTable, "Objective:", headerFont, BaseColor.LIGHT_GRAY, Element.ALIGN_LEFT);
                     AddCellToTable(notesTable, notesReader["Objective"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-
-                    // Assessment Section
+ 
                     AddCellToTable(notesTable, "Assessment:", headerFont, BaseColor.LIGHT_GRAY, Element.ALIGN_LEFT);
                     AddCellToTable(notesTable, notesReader["Assessment"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
 
-                    // Plan Section
                     AddCellToTable(notesTable, "Plan:", headerFont, BaseColor.LIGHT_GRAY, Element.ALIGN_LEFT);
                     AddCellToTable(notesTable, notesReader["Plan"].ToString(), dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
 
@@ -300,7 +272,6 @@ namespace ClinicalNotes
 
             pdfDoc.Close();
 
-            // Write the document to the output stream
             Response.Write(pdfDoc);
             Response.End();
         }
@@ -312,6 +283,10 @@ namespace ClinicalNotes
             cell.BackgroundColor = backgroundColor;
             table.AddCell(cell);
         }
+
+
+
+
 
         //protected void btnDownloadPDF_ServerClick(object sender, EventArgs e)
         //{
@@ -359,7 +334,7 @@ namespace ClinicalNotes
         //    Font titleFont = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
         //    Paragraph title = new Paragraph("Clinical Notes", titleFont);
         //    title.Alignment = Element.ALIGN_CENTER;
-            
+
         //    pdfDoc.Add(title);
 
         //    // Add a new line
@@ -421,9 +396,9 @@ namespace ClinicalNotes
         //    pdfDoc.Add(new Paragraph("\n"));
 
         //    // Create a table with 2 columns for the structured data
-        //    PdfPTable table = new PdfPTable(2); 
-        //    table.WidthPercentage = 100; 
-        //    table.SetWidths(new float[] { 0.5f, 2f }); 
+        //    PdfPTable table = new PdfPTable(2);
+        //    table.WidthPercentage = 100;
+        //    table.SetWidths(new float[] { 0.5f, 2f });
 
         //    // Add Subjective Section
         //    PdfPCell cell = new PdfPCell(new Phrase("Subjective:", headerFont));
@@ -442,7 +417,7 @@ namespace ClinicalNotes
         //    subjectiveList.Add(new ListItem("Client feels slightly better than last week.", textFont));
         //    PdfPCell subjectiveCell = new PdfPCell();
         //    subjectiveCell.AddElement(subjectiveList);
-        //    subjectiveCell.Border = PdfPCell.BOX; 
+        //    subjectiveCell.Border = PdfPCell.BOX;
         //    subjectiveCell.BorderWidth = 1f;
         //    subjectiveCell.BorderColor = BaseColor.BLACK;
         //    table.AddCell(subjectiveCell);
