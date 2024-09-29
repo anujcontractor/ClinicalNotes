@@ -74,16 +74,24 @@ namespace ClinicalNotes
 
     public partial class Home : System.Web.UI.Page
     {
-        public List<PatientInfo> patients = new List<PatientInfo>();
+        
         protected void Page_Load(object sender, EventArgs e)
         {
+            
+                List<PatientInfo> patients = GetPatientInfos(); 
+            
+        }
+
+        public List<PatientInfo> GetPatientInfos()
+        {
+            List<PatientInfo> patients = new List<PatientInfo>();
             try
             {
-                String connect = "";
+                String connect = "Data Source=.\\sqlexpress;Initial Catalog=mydatabase;Integrated Security=True;Encrypt=False";
                 using (SqlConnection connection = new SqlConnection(connect))
                 {
                     connection.Open();
-                    String sql = "SELECT * FROM patients";
+                    String sql = "SELECT * FROM PatientInfo";
                     using (SqlCommand command = new SqlCommand(sql, connection))
                     {
                         using (SqlDataReader reader = command.ExecuteReader())
@@ -110,9 +118,10 @@ namespace ClinicalNotes
             {
                 Console.WriteLine("Error : " + ex.ToString());
             }
+            return patients;
         }
 
-        private List<ClinicalNotes> GetClinicalNotesForPatient(int caseRefNo, SqlConnection connection)
+        public List<ClinicalNotes> GetClinicalNotesForPatient(int caseRefNo, SqlConnection connection)
         {
             List<ClinicalNotes> clinicalNotesList = new List<ClinicalNotes>();
 
@@ -184,14 +193,14 @@ namespace ClinicalNotes
             pdfDoc.Add(new Paragraph("\n\n"));
 
             // Fetch data from the database
-            string connect = "";  
+            string connect = "Data Source=.\\sqlexpress;Initial Catalog=mydatabase;Integrated Security=True;Encrypt=False";  
             int patientCaseRefNo = 18090;  
 
             using (SqlConnection connection = new SqlConnection(connect))
             {
                 connection.Open();
 
-                string patientQuery = "SELECT CaseRefNo, Name, RequestedSession, DOB, LoginDate, DOI, Address FROM Patients WHERE CaseRefNo = @CaseRefNo";
+                string patientQuery = "SELECT CaseRefNo, Name, RequestedSession, DOB, LoginDate, DOI, Address FROM PatientInfo WHERE CaseRefNo = @CaseRefNo";
                 SqlCommand patientCommand = new SqlCommand(patientQuery, connection);
                 patientCommand.Parameters.AddWithValue("@CaseRefNo", patientCaseRefNo);
 
@@ -233,7 +242,7 @@ namespace ClinicalNotes
 
                 reader.Close();
 
-                string notesQuery = "SELECT NoteDate, Subjective, Objective, Assessment, Plan FROM ClinicalNotes WHERE CaseRefNo = @CaseRefNo";
+                string notesQuery = "SELECT * FROM ClinicalNotes WHERE CaseRefNo = @CaseRefNo";
                 SqlCommand notesCommand = new SqlCommand(notesQuery, connection);
                 notesCommand.Parameters.AddWithValue("@CaseRefNo", patientCaseRefNo);
 
@@ -248,7 +257,7 @@ namespace ClinicalNotes
                     notesTable.WidthPercentage = 100;
                     notesTable.SetWidths(new float[] { 0.5f, 2f });
 
-                    Paragraph date = new Paragraph(Convert.ToDateTime(notesReader["NoteDate"]).ToString("dd/MM/yyyy"), dataFont);
+                    Paragraph date = new Paragraph(Convert.ToDateTime(notesReader["Date"]).ToString("dd/MM/yyyy"), dataFont);
                     pdfDoc.Add(date);
 
                     AddCellToTable(notesTable, "Subjective:", headerFont, BaseColor.LIGHT_GRAY, Element.ALIGN_LEFT);
@@ -283,249 +292,5 @@ namespace ClinicalNotes
             cell.BackgroundColor = backgroundColor;
             table.AddCell(cell);
         }
-
-
-
-
-
-        //protected void btnDownloadPDF_ServerClick(object sender, EventArgs e)
-        //{
-        //    // Define the file name
-        //    string fileName = "ClinicalNote.pdf";
-
-        //    // Set the HTTP headers to force download
-        //    Response.ContentType = "application/pdf";
-        //    Response.AddHeader("content-disposition", "attachment;filename=" + fileName);
-        //    Response.Cache.SetCacheability(HttpCacheability.NoCache);
-
-        //    string footerLine1 = "15-19 Cavendish Place, 2nd Floor, London, England, W1G 0DD";
-        //    string footerLine2 = "Email: enquiry@londonphysiotherapy.com";
-
-        //    // Create a PDF document
-        //    Document pdfDoc = new Document(PageSize.A4, 25, 25, 30, 30);
-        //    PdfWriter writer = PdfWriter.GetInstance(pdfDoc, Response.OutputStream);
-
-        //    TwoLineFooter eventFooter = new TwoLineFooter(footerLine1, footerLine2);
-        //    writer.PageEvent = eventFooter;
-
-        //    pdfDoc.Open();
-
-        //    string logoPath = Server.MapPath("~/Assets/logo.jpg"); // Update the path accordingly
-        //    iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(logoPath);
-        //    logo.ScaleToFit(100f, 50f); // Adjust size
-        //    logo.SetAbsolutePosition(25, pdfDoc.PageSize.Height - 80); // Adjust position for upper-left corner
-        //    pdfDoc.Add(logo);
-
-        //    // Add the Hospital Address to the upper right corner
-        //    Font addressFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK);
-        //    Paragraph address = new Paragraph("15-19 Cavandish Place 2nd Floor\nLondon, England W1G 0DD\nenquiry@londonphysiotherapy.com", addressFont);
-        //    address.Alignment = Element.ALIGN_RIGHT;
-        //    pdfDoc.Add(address);
-
-        //    pdfDoc.Add(new Paragraph("\n"));
-        //    pdfDoc.Add(new Paragraph("\n"));
-        //    pdfDoc.Add(new Paragraph("\n"));
-
-        //    // Create a PdfContentByte to place the address at an absolute position
-        //    // PdfContentByte cb = writer.DirectContent;
-        //    // ColumnText.ShowTextAligned(cb, Element.ALIGN_RIGHT, new Phrase(address), pdfDoc.PageSize.Width - 25, pdfDoc.PageSize.Height - 50, 0);
-
-        //    // Add the Title with style
-        //    Font titleFont = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD | Font.UNDERLINE, BaseColor.BLACK);
-        //    Paragraph title = new Paragraph("Clinical Notes", titleFont);
-        //    title.Alignment = Element.ALIGN_CENTER;
-
-        //    pdfDoc.Add(title);
-
-        //    // Add a new line
-        //    pdfDoc.Add(new Paragraph("\n"));
-        //    pdfDoc.Add(new Paragraph("\n"));
-
-        //    PdfPTable haedtable = new PdfPTable(4);
-        //    haedtable.WidthPercentage = 100;
-
-        //    // Set column widths
-        //    float[] columnWidths = { 1.5f, 3f, 1.5f, 3f }; // Adjust column widths
-        //    haedtable.SetWidths(columnWidths);
-
-        //    // Define fonts
-        //    Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.BLACK);
-        //    Font dataFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL, BaseColor.BLACK);
-
-        //    // Define cell background color for headers
-        //    BaseColor headerColor = new BaseColor(192, 192, 192); // Light gray
-
-        //    // Add "Case Ref No:" and "Requested Session:"
-        //    AddCellToTable(haedtable, "Case Ref No:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "18090", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "Requested Session:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "Initial Assessment + 6", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-
-        //    // Add "Name:" and "DOB:"
-        //    AddCellToTable(haedtable, "Name:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "Mr. Owen Tobitt", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "DOB:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "23/05/2002", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-
-        //    // Add "Login Date:" and "DOI:"
-        //    AddCellToTable(haedtable, "Login Date:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "11/06/2024", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "DOI:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    AddCellToTable(haedtable, "02/05/2024", dataFont, BaseColor.WHITE, Element.ALIGN_LEFT);
-
-        //    // Add "Address:"
-        //    AddCellToTable(haedtable, "Address:", headerFont, headerColor, Element.ALIGN_LEFT);
-        //    PdfPCell addressCell = new PdfPCell(new Phrase("1 Goldwell Lane, Aldington, Ashford, Kent TN25 7DX", dataFont));
-        //    addressCell.Colspan = 3;
-        //    addressCell.HorizontalAlignment = Element.ALIGN_LEFT;
-        //    addressCell.VerticalAlignment = Element.ALIGN_MIDDLE;
-        //    addressCell.Border = PdfPCell.BOX;
-        //    haedtable.AddCell(addressCell);
-
-        //    // Add the table to the document
-        //    pdfDoc.Add(haedtable);
-
-        //    pdfDoc.Add(new Paragraph("\n"));
-
-        //    // Define general font for the rest of the 
-        //    Font textFont = new Font(Font.FontFamily.HELVETICA, 11, Font.NORMAL, BaseColor.BLACK);
-
-        //    Paragraph date = new Paragraph("29/07/2024", textFont);
-        //    pdfDoc.Add(date);
-
-        //    pdfDoc.Add(new Paragraph("\n"));
-
-        //    // Create a table with 2 columns for the structured data
-        //    PdfPTable table = new PdfPTable(2);
-        //    table.WidthPercentage = 100;
-        //    table.SetWidths(new float[] { 0.5f, 2f });
-
-        //    // Add Subjective Section
-        //    PdfPCell cell = new PdfPCell(new Phrase("Subjective:", headerFont));
-        //    cell.Border = PdfPCell.BOX;
-        //    cell.BorderWidth = 1f;
-        //    cell.BackgroundColor = BaseColor.LIGHT_GRAY;
-        //    cell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(cell);
-
-        //    List subjectiveList = new List(List.ORDERED);
-        //    subjectiveList.IndentationLeft = 20f;
-        //    subjectiveList.Add(new ListItem("Consented to review and treat virtually", textFont));
-        //    subjectiveList.Add(new ListItem("Patient reports major pain and discomfort at shoulder, neck, and knee; moderate pain at lower back.", textFont));
-        //    subjectiveList.Add(new ListItem("ADL like bending, lifting, carrying, driving, and sleeping improving on daily basis.", textFont));
-        //    subjectiveList.Add(new ListItem("VAS same as last", textFont));
-        //    subjectiveList.Add(new ListItem("Client feels slightly better than last week.", textFont));
-        //    PdfPCell subjectiveCell = new PdfPCell();
-        //    subjectiveCell.AddElement(subjectiveList);
-        //    subjectiveCell.Border = PdfPCell.BOX;
-        //    subjectiveCell.BorderWidth = 1f;
-        //    subjectiveCell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(subjectiveCell);
-
-        //    // Add Objective Section
-        //    cell = new PdfPCell(new Phrase("Objective:", headerFont));
-        //    cell.Border = PdfPCell.BOX;
-        //    cell.BorderWidth = 1f;
-        //    cell.BackgroundColor = BaseColor.LIGHT_GRAY;
-        //    cell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(cell);
-
-        //    List objectiveList = new List(List.ORDERED);
-        //    objectiveList.IndentationLeft = 20f;
-        //    objectiveList.Add(new ListItem("All SDs, red flags absent. No P+Ns, bruises, deformity reported.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - lower back - moderate pain and stiffness.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - Cervical spine - 70% EOR major pain.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - right shoulder - 80% EOR major pain.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - left shoulder - 80% EOR major pain.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - Right knee - 80% EOR major pain.", textFont));
-        //    objectiveList.Add(new ListItem("AROM - left knee - 80% EOR major pain.", textFont));
-        //    PdfPCell objectiveCell = new PdfPCell();
-        //    objectiveCell.AddElement(objectiveList);
-        //    objectiveCell.Border = PdfPCell.BOX;
-        //    objectiveCell.BorderWidth = 1f;
-        //    objectiveCell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(objectiveCell);
-
-        //    // Add Assessment Section
-        //    cell = new PdfPCell(new Phrase("Assessment:", headerFont));
-        //    cell.Border = PdfPCell.BOX;
-        //    cell.BorderWidth = 1f;
-        //    cell.BackgroundColor = BaseColor.LIGHT_GRAY;
-        //    cell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(cell);
-
-        //    List assessmentList = new List(List.ORDERED);
-        //    assessmentList.IndentationLeft = 20f;
-        //    assessmentList.Add(new ListItem("Education about the condition", textFont));
-        //    assessmentList.Add(new ListItem("Postural correction", textFont));
-        //    assessmentList.Add(new ListItem("Advice", textFont));
-        //    assessmentList.Add(new ListItem("Home exercises", textFont));
-        //    assessmentList.Add(new ListItem("Hot and cold packs", textFont));
-        //    PdfPCell assessmentCell = new PdfPCell();
-        //    assessmentCell.AddElement(assessmentList);
-        //    assessmentCell.Border = PdfPCell.BOX;
-        //    assessmentCell.BorderWidth = 1f;
-        //    assessmentCell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(assessmentCell);
-
-        //    // Add Plan Section
-        //    cell = new PdfPCell(new Phrase("Plan:", headerFont));
-        //    cell.Border = PdfPCell.BOX;
-        //    cell.BorderWidth = 1f;
-        //    cell.BackgroundColor = BaseColor.LIGHT_GRAY;
-        //    cell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(cell);
-
-        //    List planlist = new List(List.ORDERED);
-        //    planlist.IndentationLeft = 20f;
-        //    planlist.Add(new ListItem("HEP + FU", textFont));
-        //    PdfPCell planCell = new PdfPCell();
-        //    planCell.AddElement(planlist);
-        //    planCell.Border = PdfPCell.BOX;
-        //    planCell.BorderWidth = 1f;
-        //    planCell.BorderColor = BaseColor.BLACK;
-        //    table.AddCell(planCell);
-        //    pdfDoc.Add(table);
-
-        //    Paragraph caption = new Paragraph("I believe the content of this report is accurate and completed to the best of my knowledge and belief.", textFont);
-        //    pdfDoc.Add(caption);
-
-        //    pdfDoc.Add(new Paragraph("\n"));
-
-
-        //    Paragraph t1 = new Paragraph("Physiotherapist:", textFont);
-        //    pdfDoc.Add(t1);
-
-        //    Paragraph t2 = new Paragraph("HCPC Number:", textFont);
-        //    pdfDoc.Add(t2);
-
-        //    Paragraph t3 = new Paragraph("CSP Number:", textFont);
-        //    pdfDoc.Add(t3);
-
-        //    Paragraph t4 = new Paragraph("Signature:", textFont);
-        //    pdfDoc.Add(t4);
-
-
-        //    pdfDoc.Close();
-
-        //    // Write the document to the output stream
-        //    Response.Write(pdfDoc);
-        //    Response.End();
-        //}
-
-        //private void AddCellToTable(PdfPTable haedtable, string value, Font dataFont, BaseColor backgroundColor, int alignment)
-        //{
-        //    PdfPCell cell = new PdfPCell(new Phrase(value, dataFont));
-
-        //    // Set the alignment for the cell
-        //    cell.HorizontalAlignment = alignment;
-
-        //    // Set the background color for the cell
-        //    cell.BackgroundColor = backgroundColor;
-
-        //    // Add the cell to the table
-        //    haedtable.AddCell(cell);
-        //}
-
     }
 }

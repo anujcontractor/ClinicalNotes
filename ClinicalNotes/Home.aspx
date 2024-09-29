@@ -188,7 +188,7 @@
                         ordering: false,
                         info: false
                     });
-                    var patientData = <%= new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(patients) %>;
+                    var patientData = <%= new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(GetPatientInfos()) %>;
 
                     populatePatientInfo(patientData);
                     populateClinicalNotes(patientData.ClinicalNotes);
