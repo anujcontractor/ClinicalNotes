@@ -41,107 +41,11 @@
                     </tr>
                 </thead>
                 <tbody id="patientTableBody">
-                    <!-- Data will be dynamically inserted here -->
+                    <!-- Data -->
                 </tbody>
             </table>
         
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="clinical-note-header">11/09/2024 ----</div>
-                        
-                       
-                            <div class="section-title">Subjective</div>
-                            <ul>
-                                <li>Consented to review and treat virtually</li>
-                                <li>Patient reports major pain and discomfort at shoulder, neck, and knee; moderate pain at lower back.</li>
-                                <li>ADL like bending, lifting, carrying, driving and sleeping improving on daily basis</li>
-                                <li>VAS same as last</li>
-                                <li>Client feels slightly better than last week.</li>
-                            </ul>
-
-                        
-                            <div class="section-title">Objective</div>
-                            <ol>
-                                <li>All SDs, red flags absent. No P+Ns, bruises, deformity reported.</li>
-                                <li>AROM- lower back- moderate pain and stiffness</li>
-                                <li>AROM – Cervical spine- 70% EOR major pain</li>
-                                <li>AROM- right shoulder-80% EOR major pain</li>
-                                <li>AROM- left shoulder-80% EOR major pain</li>
-                                <li>AROM- Right knee- 80% EOR major pain</li>
-                                <li>AROM- left knee- 80% EOR major pain</li>
-                            </ol>
-
-                           
-                            <div class="section-title">Assessment</div>
-                            <ol>
-                                <li>Education about the condition</li>
-                                <li>Postural correction</li>
-                                <li>Advice,</li>
-                                <li>Home exercises,</li>
-                                <li>Hot and cold packs,</li>
-                            </ol>
-
-                            <div class="section-title">Plan</div>
-                            <p>HEP + FU</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="clinical-note-header">18/09/2024 ----</div>
-                        
-                            <div class="section-title">Subjective</div>
-                            <ul>
-                                <li>Consented to review and treat virtually</li>
-                                <li>Patient reports moderate pain and discomfort at lower back and minor pain at both knee.</li>
-                                <li>ADL like bending, lifting, carrying, driving and sleeping improving on daily basis</li>
-                                <li>Better, most pain and discomfort in neck.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div> 
-
-            <!-- <div id="clinicalNotesSection" class="row">
-                < foreach (var note in patients.ClinicalNotes) { %>
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="clinical-note-header"><= note.Date.ToShortDateString() %> ----</div>
-
-                        
-                                <div class="section-title">Subjective</div>
-                                <ul>
-                                    <li><= note.Subjective %></li>
-                                </ul>
-
-                 
-                                <div class="section-title">Objective</div>
-                                <ul>
-                                    <li><= note.Objective %></li>
-                                </ul>
-
-                                <div class="section-title">Assessment</div>
-                                <ul>
-                                    <li><= note.Assessment %></li>
-                                </ul>
-
-                         
-                                <div class="section-title">Plan</div>
-                                <ul>
-                                    <li><= note.Plan %></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                < } %>
-            </div> -->
+            
 
             <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
             <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
@@ -149,7 +53,6 @@
             <script type="text/javascript">
                 $(document).ready(function () {
 
-                    // Re-initialize the DataTable after inserting the rows
                     $('#patientTable').DataTable({
                         paging: false,
                         searching: false,
@@ -157,18 +60,16 @@
                         info: false
                     });
 
-                    // Call web service on page load
                     fetchPatientInfo();
 
-                    // Function to call web service and fetch patient data
                     function fetchPatientInfo() {
                         $.ajax({
                             type: "POST",
-                            url: "http://localhost:44316/WebService1.asmx/GetPatientInfos",
+                            url: "https://localhost:44316/WebService1.asmx/GetPatientInfos",
                             contentType: "application/json; charset=utf-8",
                             dataType: "json",
                             success: function (response) {
-                                var patients = response.d; // The patient data
+                                var patients = response.d; 
                                 console.log(patients);
                                 populatePatientTable(patients);
                             },
@@ -178,13 +79,12 @@
                         });
                     }
 
-                    // Function to dynamically populate the patient table
                     function populatePatientTable(patients) {
                         var tableBody = $("#patientTableBody");
-                        tableBody.empty(); // Clear any previous data
+                        tableBody.empty(); 
 
-                        // Loop through each patient and create a table row
                         patients.forEach(function (patient) {
+                            
                             var row = `<tr>
                                 <td>${patient.CaseRefNo}</td>
                                 <td>${patient.Name}</td>
@@ -193,9 +93,58 @@
                                 <td>${new Date(patient.LoginDate).toLocaleDateString()}</td>
                                 <td>${new Date(patient.DOI).toLocaleDateString()}</td>
                                 <td>${patient.Address}</td>
+                                <td>
+                                    <button class="toggleNotes" data-caseref="${patient.CaseRefNo}">Show Notes</button>
+                                </td>
                             </tr>`;
+
                             tableBody.append(row);
+
+                            var clinicalNotesRow = `<tr class="notesRow" id="notes-${patient.CaseRefNo}" style="display:none;">
+                                <td colspan="8">
+                                    <table class="notesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Note ID</th>
+                                                <th>Date</th>
+                                                <th>Subjective</th>
+                                                <th>Objective</th>
+                                                <th>Assessment</th>
+                                                <th>Plan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+
+                            patient.ClinicalNotes.forEach(function (note) {
+                                clinicalNotesRow += `<tr>
+                                    <td>${note.NoteID}</td>
+                                    <td>${new Date(parseInt(note.Date.substr(6))).toLocaleDateString()}</td>
+                                    <td>${note.Subjective}</td>
+                                    <td>${note.Objective}</td>
+                                    <td>${note.Assessment}</td>
+                                    <td>${note.Plan}</td>
+                                </tr>`;
+                            });
+
+                            clinicalNotesRow += `</tbody></table></td></tr>`;
+
+                            tableBody.append(clinicalNotesRow);
                         });
+
+                        $(document).on('click', '.toggleNotes', function (event) {
+                            event.preventDefault(); 
+
+                            var caseRefNo = $(this).data('caseref');
+                            var notesRow = $('#notes-' + caseRefNo);
+                            notesRow.toggle(); 
+
+                            if (notesRow.is(':visible')) {
+                                $(this).text('Hide Notes'); 
+                            } else {
+                                $(this).text('Show Notes'); 
+                            }
+                        });
+
 
                         
                     }
