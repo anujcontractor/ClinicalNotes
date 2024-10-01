@@ -18,63 +18,30 @@
             margin-bottom: 10px;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
     <form id="form1" runat="server">
         <div>
             <h1>Clinical Notes : </h1>
             <button id="btnDownloadPDF" runat="server" class="btn btn-primary mt-3" onserverclick="btnDownloadPDF_ServerClick">Download PDF</button>
-            <!--- <table id="instructionTable" class="display">
-                <tbody>
-                    <tr>
-                        <td>Case Ref No:</td>
-                        <td>@PatientInfo.CaseRefNo</td>
-                        <td>Requested Session:</td>
-                        <td>Initial Assessment + 6</td>
-                    </tr>
-                    <tr>
-                        <td>Name:</td>
-                        <td>@PatientInfo.Name</td>
-                        <td>DOB:</td>
-                        <td>23/05/2002</td>
-                    </tr>
-                    <tr>
-                        <td>Login Date:</td>
-                        <td>11/06/2024</td>
-                        <td>DOI:</td>
-                        <td>02/05/2024</td>
-                    </tr>
-                    <tr>
-                        <td>Address:</td>
-                        <td colspan="3">1 Goldwell Lane, Aldington, Ashford, Kent TN25 7DX</td>
-                    </tr>
-                </tbody>
-            </table> -->
 
-            <table id="instructionTable" class="display">
-                <tbody>
+           <table id="patientTable" class="display">
+                <thead>
                     <tr>
-                        <td>Case Ref No:</td>
-                        <td id="caseRefNo"></td>
-                        <td>Requested Session:</td>
-                        <td id="requestedSession"></td>
+                        <th>Case Ref No</th>
+                        <th>Name</th>
+                        <th>Requested Session</th>
+                        <th>DOB</th>
+                        <th>Login Date</th>
+                        <th>DOI</th>
+                        <th>Address</th>
                     </tr>
-                    <tr>
-                        <td>Name:</td>
-                        <td id="name"></td>
-                        <td>DOB:</td>
-                        <td id="dob"></td>
-                    </tr>
-                    <tr>
-                        <td>Login Date:</td>
-                        <td id="loginDate"></td>
-                        <td>DOI:</td>
-                        <td id="doi"></td>
-                    </tr>
-                    <tr>
-                        <td>Address:</td>
-                        <td id="address" colspan="3"></td>
-                    </tr>
+                </thead>
+                <tbody id="patientTableBody">
+                    <!-- Data will be dynamically inserted here -->
                 </tbody>
             </table>
         
@@ -179,57 +146,60 @@
             <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
             <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 
-            <script>
+            <script type="text/javascript">
                 $(document).ready(function () {
-                    
-                    $('#instructionTable').DataTable({
+
+                    // Re-initialize the DataTable after inserting the rows
+                    $('#patientTable').DataTable({
                         paging: false,
                         searching: false,
                         ordering: false,
                         info: false
                     });
-                    var patientData = <%= new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(GetPatientInfos()) %>;
 
-                    populatePatientInfo(patientData);
-                    populateClinicalNotes(patientData.ClinicalNotes);
+                    // Call web service on page load
+                    fetchPatientInfo();
 
-                });
+                    // Function to call web service and fetch patient data
+                    function fetchPatientInfo() {
+                        $.ajax({
+                            type: "POST",
+                            url: "http://localhost:44316/WebService1.asmx/GetPatientInfos",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (response) {
+                                var patients = response.d; // The patient data
+                                console.log(patients);
+                                populatePatientTable(patients);
+                            },
+                            error: function (xhr, status, error) {
+                                console.log('Error fetching patient data:', xhr.status, error);
+                            }
+                        });
+                    }
 
-                function populatePatientInfo(data) {
-                    
-                    $("#caseRefNo").text(data.CaseRefNo);
-                    $("#name").text(data.Name);
-                    $("#dob").text(new Date(data.DOB).toLocaleDateString());
-                    $("#loginDate").text(new Date(data.LoginDate).toLocaleDateString());
-                    $("#doi").text(new Date(data.DOI).toLocaleDateString());
-                    $("#address").text(data.Address);
-                }
+                    // Function to dynamically populate the patient table
+                    function populatePatientTable(patients) {
+                        var tableBody = $("#patientTableBody");
+                        tableBody.empty(); // Clear any previous data
 
-                function populateClinicalNotes(clinicalNotes) {
-                    
-                    clinicalNotes.forEach(function (note) {
+                        // Loop through each patient and create a table row
+                        patients.forEach(function (patient) {
+                            var row = `<tr>
+                                <td>${patient.CaseRefNo}</td>
+                                <td>${patient.Name}</td>
+                                <td>${patient.RequestedSession}</td>
+                                <td>${new Date(patient.DOB).toLocaleDateString()}</td>
+                                <td>${new Date(patient.LoginDate).toLocaleDateString()}</td>
+                                <td>${new Date(patient.DOI).toLocaleDateString()}</td>
+                                <td>${patient.Address}</td>
+                            </tr>`;
+                            tableBody.append(row);
+                        });
+
                         
-                        var noteHtml = `
-                            <div class="clinical-note-header">${new Date(note.Date).toLocaleDateString()} ----</div>
-                            <div class="section-title">Subjective</div>
-                            <ul>
-                                <li>${note.Subjective}</li>
-                            </ul>
-                            <div class="section-title">Objective</div>
-                            <ul>
-                                <li>${note.Objective}</li>
-                            </ul>
-                            <div class="section-title">Assessment</div>
-                            <ul>
-                                <li>${note.Assessment}</li>
-                            </ul>
-                            <div class="section-title">Plan</div>
-                            <ul>
-                                <li>${note.Plan}</li>
-                            </ul>`;
-                        $(".card-body").append(noteHtml);
-                    });
-                }
+                    }
+                });
             </script>
 
 

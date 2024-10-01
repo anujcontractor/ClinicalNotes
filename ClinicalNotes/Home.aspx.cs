@@ -77,9 +77,14 @@ namespace ClinicalNotes
         
         protected void Page_Load(object sender, EventArgs e)
         {
-            
-                List<PatientInfo> patients = GetPatientInfos(); 
-            
+            if (!IsPostBack)
+            {
+                List<PatientInfo> patients = GetPatientInfos();
+                var patientData = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(patients);
+
+                // Inject the JavaScript into the page
+                ClientScript.RegisterStartupScript(this.GetType(), "patientScript", $"var patientData = {patientData};", true);
+            }
         }
 
         public List<PatientInfo> GetPatientInfos()
@@ -91,7 +96,7 @@ namespace ClinicalNotes
                 using (SqlConnection connection = new SqlConnection(connect))
                 {
                     connection.Open();
-                    String sql = "SELECT * FROM PatientInfo";
+                    String sql = "SELECT * FROM PatientInfo WHERE CaseRefNo = 18090";
                     using (SqlCommand command = new SqlCommand(sql, connection))
                     {
                         using (SqlDataReader reader = command.ExecuteReader())
