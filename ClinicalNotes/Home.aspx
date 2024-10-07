@@ -21,12 +21,49 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        function downloadPDF(patientCaseRefNo) {
+            event.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: "https://localhost:44316/WebService1.asmx/btnDownloadPDF_ServerClick", 
+                data: JSON.stringify({ patientCaseRefNo: patientCaseRefNo }), 
+                contentType: "application/json; charset=utf-8",
+                xhrFields: {
+                    responseType: 'blob'  
+                },
+                success: function (response, status, xhr) {
+                    
+                    var blob = new Blob([response], { type: 'application/pdf' });
+
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'ClinicalNote.pdf'; 
+
+                    document.body.appendChild(link);
+
+                    link.click();
+
+                    document.body.removeChild(link);
+                },
+                error: function (xhr, status, error) {
+                    console.log('Error downloading PDF:', xhr.status, error);
+                    alert('Failed to download PDF. Status: ' + xhr.status);
+                }
+            });
+        }
+
+    </script>
+
+
 </head>
 <body>
     <form id="form1" runat="server">
         <div>
             <h1>Clinical Notes : </h1>
-            <button id="btnDownloadPDF" runat="server" class="btn btn-primary mt-3" onserverclick="btnDownloadPDF_ServerClick">Download PDF</button>
+            <!--<button id="btnDownloadPDF" runat="server" class="btn btn-primary mt-3" onserverclick="btnDownloadPDF_ServerClick">Download PDF</button>-->
+            <button id="Button1" onclick="downloadPDF(18090)" class="btn btn-primary mt-3" >Download PDF</button>
+
 
            <table id="patientTable" class="display">
                 <thead>
